@@ -16,7 +16,8 @@ logger.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('%(asctime)s, %(levelname)s, %(message)s, %(name)s',)
+formatter = logging.Formatter(
+    '%(asctime)s, %(levelname)s, %(message)s, %(name)s',)
 stream_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
@@ -121,8 +122,7 @@ def main():
         send_message(bot, message)
         logger.debug('Сообщение успешно отправлено.')
         return
-    #timestamp = int(time.time())
-    timestamp = 1702151053
+    timestamp = int(time.time())
 
     while True:
         try:
