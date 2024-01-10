@@ -8,7 +8,6 @@ from http import HTTPStatus
 import pytest
 import requests
 import telegram
-
 import utils
 
 old_sleep = time.sleep
