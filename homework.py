@@ -51,10 +51,10 @@ def check_tokens():
             missing_tokens.append(token)
 
     if missing_tokens:
-        logger.critical(f'Ошибка: отсутствуют следующие '
+        logger.critical('Ошибка: отсутствуют следующие '
                         f'переменные: {", ".join(missing_tokens)}.')
         raise NoVariableException(
-            f'Ошибка: отсутствуют '
+            'Ошибка: отсутствуют '
             f'следующие переменные: {", ".join(missing_tokens)}.')
 
 
@@ -62,10 +62,11 @@ def get_api_answer(timestamp):
     """Функция отправляет запрос на ЯП API."""
     payload = {'from_date': timestamp}
     try:
+        logger.debug('Программа сделала запрос к серверу ЯП.')
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
         if response.status_code == HTTPStatus.OK:
             return response.json()
-        raise MyException('Ошибка при получении данных от API')
+        raise MyException('Получен неожиданный статус ответа.')
     except requests.RequestException:
         raise MyException('Ошибка при получении данных от API')
 
@@ -111,33 +112,32 @@ def send_message(bot, message):
 
 def main():
     """Основная логика работы бота."""
-    bot = telegram.Bot(token=TELEGRAM_TOKEN)
     check_tokens()
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = 0
     old_status = ''
-    new_status = ''
 
     while True:
         try:
             response = get_api_answer(timestamp)
-            timestamp = response.get('current_date', 0)
+            timestamp = response.get('current_date', timestamp)
             homeworks = check_response(response)
-            if len(homeworks) != 0:
-                logger.error('Список домашних работ пуст.')
+            if homeworks:
                 message = parse_status(homeworks[0])
             else:
                 message = 'К сожалению у домашек пока нет новых статусов.'
-            new_status = message
-            if old_status != new_status:
+            if old_status != message:
                 send_message(bot, message)
-            old_status = new_status
+        except EmptyApiException():
+            logger.error('Получен пустой список домашек.')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            if error:
+            if old_status != message:
                 send_message(bot, message)
-                logger.error(f'Произошла ошибка при \
-                              отправке сообщения :{error}')
+                logger.error('Произошла ошибка при '
+                             f'отправке сообщения :{error}')
         finally:
+            old_status = message
             time.sleep(RETRY_PERIOD)
 
 
